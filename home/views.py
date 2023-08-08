@@ -167,8 +167,8 @@ def student(request):
 
 
     if request.method == "GET" :
-        student_objs = Student.objects.filter(color__isnull = False)
-        # student_objs = Student.objects.all()
+        # student_objs = Student.objects.filter(color__isnull = False)
+        student_objs = Student.objects.all()
         serializer = StudentSerializer(student_objs, many=True)
         return Response({'status':200, 'payload': serializer.data})
     
