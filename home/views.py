@@ -1,3 +1,5 @@
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import check_password
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
@@ -10,6 +12,7 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+
 
 
 
@@ -28,32 +31,53 @@ class LoginAPI(APIView):
     def post(self, request):
         data = request.data
         serializer = LoginSerializer(data = data)
-        # username = request.data.get('username')
-        # password = request.data.get('password')
+        username = request.data.get('username')
+        password = request.data.get('password')
         if not serializer.is_valid():
             return Response({
                 'status' : False,
                 'message' : serializer.errors
             }, status.HTTP_400_BAD_REQUEST)
         
-        
-        user = authenticate(username = serializer.data['username'], password = serializer.data['password'])
+    
+        print(request.user)
+        # user = authenticate(username = serializer.data['username'], password = serializer.data['password'])
         # user = authenticate(username = username, password = password)
 
-
-        if not user:
-            return Response({
-                'status' : False,
-                'message' : 'invalid credentials' 
-            }, status.HTTP_400_BAD_REQUEST)
+        if username is None or password is None:
+            return Response({'error': 'Please provide both username and password'},status.HTTP_400_BAD_REQUEST)
         
-        token, _ = Token.objects.get_or_create(user = user)
+        try:
+            user = User.objects.get(username=username)
 
-        return Response({
-            'status' : True,
-            'message': 'user logged-in',
-            'token': str(token)
-            }, status.HTTP_202_ACCEPTED)
+            if check_password(password, user.password):
+                token, _ = Token.objects.get_or_create(user = user)
+
+                return Response({
+                    'status' : True,
+                    'message': 'user logged-in',
+                    'token': str(token)
+                    }, status.HTTP_202_ACCEPTED)
+            else:
+                return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        except User.DoesNotExist:
+            return Response({'error': 'User Not Found.'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        
+        # if not user:
+        #     return Response({
+        #         'status' : False,
+        #         'message' : 'invalid credentials' 
+        #     }, status.HTTP_400_BAD_REQUEST)
+        
+        # token, _ = Token.objects.get_or_create(user = user)
+
+        # return Response({
+        #     'status' : True,
+        #     'message': 'user logged-in',
+        #     'token': str(token)
+        #     }, status.HTTP_202_ACCEPTED)
     
 
 
@@ -115,7 +139,7 @@ class StudentAPI(APIView):
             return Response({'status': False,'message' : 'invalid id'},status.HTTP_400_BAD_REQUEST)
         
         student_obj = Student.objects.get(id = data['id'])
-        serializer = StudentSerializer(student_obj, data=data,partial = True)
+        serializer = StudentSerializerPatch(student_obj, data=data,partial = True)
 
         if not serializer.is_valid():
             # print(serializer.errors)
@@ -123,7 +147,7 @@ class StudentAPI(APIView):
         
         serializer.save()
         
-        return Response({'status':200, 'payload': serializer.data, 'message': 'Changes Made'})
+        return Response({'status':200, 'payload': serializer.data, 'message': 'Partial Changes Made'})
 
     # def patch(self, request):
     #     data = request.data

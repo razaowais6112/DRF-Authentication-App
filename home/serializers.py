@@ -52,22 +52,33 @@ class StudentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         # depth = 1    
 
-    # def get_color_info(self, obj):
-    #     color_obj = Color.objects.get(id = obj.color.id)
-    #     return {"color_name": color_obj.color_name, "hex_code": "0010"}
+    def get_color_info(self, obj):
+        color_obj = Color.objects.get(id = obj.color.id)
+        return {"color_name": color_obj.color_name, "hex_code": "0010"}
         
     
-    # def get_country(self, obj):
-    #     return "India"
+    def get_country(self, obj):
+        return "India"
     
-    # def validate(self, data):
-    #     special_characters = "!@#$%^&*()-+?_=,<>/"
-    #     if any(c in special_characters for c in data['name']):
-    #         raise serializers.ValidationError('name cannot contain special chars')
+    def validate(self, data):
+        special_characters = "!@#$%^&*()-+?_=,<>/"
+        if any(c in special_characters for c in data['name']):
+            raise serializers.ValidationError('name cannot contain special chars')
 
 
-    #     if data['age'] < 18:
-    #         raise serializers.ValidationError('age should be greater than 18')
+        if data['age'] < 18:
+            raise serializers.ValidationError('age should be greater than 18')
         
-    #     return data
+        return data
 
+class StudentSerializerPatch(serializers.ModelSerializer):
+    # color = ColorSerializer()
+    # country = serializers.SerializerMethodField()
+    # color_info = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Student
+        # fields = ['name','age']
+        #exclude = ['id']
+        fields = '__all__'
+        # depth = 1    
